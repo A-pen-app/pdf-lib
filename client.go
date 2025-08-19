@@ -13,8 +13,8 @@ import (
 )
 
 type Client interface {
-	GenerateResumePDF(ctx context.Context, template ResumeTemplate, data map[string]interface{}) ([]byte, error)
-	GenerateShareImage(ctx context.Context, template SharePostTemplate, data SharePostData) ([]byte, error)
+	GenerateResumePDF(ctx context.Context, template ResumeTemplate, data map[string]interface{}) (*GenerateResult, error)
+	GenerateShareImage(ctx context.Context, template SharePostTemplate, data SharePostData) (*GenerateResult, error)
 }
 
 type client struct {
@@ -29,9 +29,9 @@ func NewClient(baseURL string) Client {
 	}
 }
 
-func (c *client) GenerateResumePDF(ctx context.Context, template ResumeTemplate, data map[string]interface{}) ([]byte, error) {
+func (c *client) GenerateResumePDF(ctx context.Context, template ResumeTemplate, data map[string]interface{}) (*GenerateResult, error) {
 	requestData := GenerateRequest{
-		OutputType: "pdf",
+		OutputType: OutputTypePDF,
 		Template:   string(template),
 		Data:       data,
 	}
@@ -39,18 +39,18 @@ func (c *client) GenerateResumePDF(ctx context.Context, template ResumeTemplate,
 	return c.generate(ctx, requestData)
 }
 
-func (c *client) GenerateShareImage(ctx context.Context, template SharePostTemplate, data SharePostData) ([]byte, error) {
+func (c *client) GenerateShareImage(ctx context.Context, template SharePostTemplate, data SharePostData) (*GenerateResult, error) {
 	requestData := GenerateRequest{
-		OutputType: "image",
+		OutputType: OutputTypeImage,
 		Template:   string(template),
-		Format:     "png",
+		Format:     FormatPNG,
 		Data:       data,
 	}
 
 	return c.generate(ctx, requestData)
 }
 
-func (c *client) generate(ctx context.Context, request GenerateRequest) ([]byte, error) {
+func (c *client) generate(ctx context.Context, request GenerateRequest) (*GenerateResult, error) {
 	if c.baseURL == "" {
 		return nil, errors.New("PDF service unavailable")
 	}
@@ -86,5 +86,11 @@ func (c *client) generate(ctx context.Context, request GenerateRequest) ([]byte,
 		return nil, fmt.Errorf("PDF generation failed: failed to read response")
 	}
 
-	return result, nil
+	extension, mimeType := request.GetExtensionAndMimeType()
+
+	return &GenerateResult{
+		Data:      result,
+		MimeType:  mimeType,
+		Extension: extension,
+	}, nil
 }
