@@ -1,4 +1,4 @@
-module pdf-lib
+module github.com/A-pen-app/pdf-lib
 
 go 1.23
 
