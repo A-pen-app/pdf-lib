@@ -1,5 +1,20 @@
 package pdf
 
+// OutputType represents the output type for generation
+type OutputType string
+
+const (
+	OutputTypePDF   OutputType = "pdf"
+	OutputTypeImage OutputType = "image"
+)
+
+// Format represents the format for image output
+type Format string
+
+const (
+	FormatPNG Format = "png"
+)
+
 // ResumeTemplate represents the template type for PDF generation
 type ResumeTemplate string
 
@@ -18,10 +33,24 @@ const (
 )
 
 type GenerateRequest struct {
-	OutputType string      `json:"outputType"`
+	OutputType OutputType  `json:"outputType"`
 	Template   string      `json:"template"`
-	Format     string      `json:"format"`
+	Format     Format      `json:"format"`
 	Data       interface{} `json:"data"`
+}
+
+// GetExtensionAndMimeType returns the file extension and MIME type based on output type and format
+func (r *GenerateRequest) GetExtensionAndMimeType() (string, string) {
+	switch r.OutputType {
+	case OutputTypePDF:
+		return ".pdf", "application/pdf"
+	case OutputTypeImage:
+		switch r.Format {
+		case FormatPNG:
+			return ".png", "image/png"
+		}
+	}
+	return "", ""
 }
 
 // SharePostImageData represents the specific data fields for share post image generation
@@ -35,4 +64,10 @@ type SharePostData struct {
 	Category       string `json:"category"`
 	Title          string `json:"title"`
 	Content        string `json:"content"`
+}
+
+type GenerateResult struct {
+	Data      []byte
+	MimeType  string
+	Extension string
 }
