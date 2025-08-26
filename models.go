@@ -64,6 +64,8 @@ type SharePostData struct {
 	Category       string `json:"category"`
 	Title          string `json:"title"`
 	Content        string `json:"content"`
+	Character      string `json:"character"`
+	AlmaMater      string `json:"alma_mater"`
 }
 
 type GenerateResult struct {
