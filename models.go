@@ -30,6 +30,7 @@ const (
 	TemplateSharePostApen  SharePostTemplate = "apen_post_sharing"
 	TemplateSharePostPhar  SharePostTemplate = "phar_post_sharing"
 	TemplateSharePostNurse SharePostTemplate = "nurse_post_sharing"
+	TemplateShareAIApen    SharePostTemplate = "apen_ai_sharing"
 )
 
 type GenerateRequest struct {
