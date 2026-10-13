@@ -54,6 +54,11 @@ func (r *GenerateRequest) GetExtensionAndMimeType() (string, string) {
 	return "", ""
 }
 
+// VideoThumbnailRequest is the body of a video thumbnail request.
+type VideoThumbnailRequest struct {
+	URL string `json:"url"`
+}
+
 // SharePostImageData represents the specific data fields for share post image generation
 type SharePostData struct {
 	Gender         string `json:"gender"`

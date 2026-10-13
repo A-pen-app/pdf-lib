@@ -15,6 +15,7 @@ import (
 type Client interface {
 	GenerateResumePDF(ctx context.Context, template ResumeTemplate, data map[string]interface{}) (*GenerateResult, error)
 	GenerateShareImage(ctx context.Context, template SharePostTemplate, data SharePostData) (*GenerateResult, error)
+	VideoThumbnail(ctx context.Context, videoURL string) (*GenerateResult, error)
 }
 
 type client struct {
@@ -48,6 +49,49 @@ func (c *client) GenerateShareImage(ctx context.Context, template SharePostTempl
 	}
 
 	return c.generate(ctx, requestData)
+}
+
+// VideoThumbnail returns the first frame of the video at videoURL as a JPEG;
+// pdf-service fetches videoURL itself.
+func (c *client) VideoThumbnail(ctx context.Context, videoURL string) (*GenerateResult, error) {
+	if c.baseURL == "" {
+		return nil, errors.New("PDF service unavailable")
+	}
+
+	jsonData, err := json.Marshal(VideoThumbnailRequest{URL: videoURL})
+	if err != nil {
+		return nil, fmt.Errorf("invalid request data: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/api/v1/video-thumbnail", bytes.NewReader(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		logging.Errorw(ctx, "call pdf service failed", "err", err)
+		return nil, fmt.Errorf("PDF service unavailable: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		logging.Errorw(ctx, "pdf service returned error", "status", resp.StatusCode, "body", string(body))
+		return nil, fmt.Errorf("PDF service error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	result, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("video thumbnail failed: %w", err)
+	}
+
+	return &GenerateResult{
+		Data:      result,
+		MimeType:  "image/jpeg",
+		Extension: ".jpg",
+	}, nil
 }
 
 func (c *client) generate(ctx context.Context, request GenerateRequest) (*GenerateResult, error) {
